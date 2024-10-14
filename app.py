@@ -1,6 +1,37 @@
 import sys
 from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import QMainWindow
+from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtWidgets import QStackedLayout
+from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
+from PyQt6.QtCore import QDate
+import pypyodbc as odbc
+
+DRIVER_NAME = 'SQL SERVER'
+SERVER_NAME = 'DESKTOP-645TUK7'
+DATABASE_NAME = 'AccountingHuDb'
+
+connection_string = f"""
+    DRIVER={{{DRIVER_NAME}}};
+    SERVER={SERVER_NAME};
+    DATABASE={DATABASE_NAME};
+    Trusted_Connection=yes;
+    uid=<hu>;
+    password=<mariasamadproject>;
+"""
+connection = odbc.connect(connection_string)
+
+print('Connected to the database')
+print('Connection:', connection)
+
+# get all data from user table
+# cursor = connection.cursor()
+# cursor.execute('SELECT * FROM [User]')
+# for row in cursor.fetchall():
+#     print(row)
+# connection.close()
+
 
 import datetime
 # Returns the current local date
@@ -16,82 +47,120 @@ class Login(QtWidgets.QMainWindow):
         # Show the GUI
         self.show()
 
-        # Event handling
-    #     self.categoryComboBox.currentTextChanged.connect(self.update_ComboBox)
-    #     self.authorNamePushButton.clicked.connect(self.authorNamePushButton_clicked)
-    #     self.issuedCheckBox.clicked.connect(self.enableIssuance)
-    #     self.clearLstBtn.clicked.connect(self.clearAuthorList)
-    #     self.journalRadio.toggled.connect(self.journalCheck)
-    #     self.okayBtn.clicked.connect(self.completeAddition)
-    #     self.closeBtn.clicked.connect(self.close)
+        # Connect the login button to a function
+        self.pushButton.clicked.connect(self.login)
+        # Connect the signup button to a function which changes window to signup window
+        self.signupButton.clicked.connect(self.signup_window)
 
-    # def close(self):
-    #     self.close()
+    def signup_window(self):
+        self.signup = Signup()
+        self.signup.show()
+        self.close()
 
-    # def completeAddition(self):
-    #     if len(self.iSBNLineEdit.text()) <= 12 and  self.purchasedOnDateEdit.date() <= datetime.datetime.now() :
-    #         if self.issuedCheckBox.isChecked():
-    #             if self.issuedByLineEdit.text() == '' or self.issuedOnDateEdit.date() > datetime.datetime.now() or self.issuedOnDateEdit.date() >= self.purchasedOnDateEdit.date():
-    #                 dlg = QtWidgets.QMessageBox(self)
-    #                 dlg.setWindowTitle ( "Error" )
-    #                 dlg.setIcon(QtWidgets.QMessageBox.Icon.Information)
-    #                 dlg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok )
-    #                 dlg.setText ( "Please fill the Issued By field and make sure Issued On Date is lesser than or equal to today and greater than Purchased On Date" )
-    #                 dlg . exec ()
-    #                 return
-            
-    #         dlg = QtWidgets.QMessageBox(self)
-    #         dlg.setWindowTitle ( "Success" )
-    #         dlg.setIcon(QtWidgets.QMessageBox.Icon.Information)
-    #         dlg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok )
-    #         dlg.setText ( " Book Added Successfully " )
-    #         dlg . exec ()
-    #     else:
-    #         dlg = QtWidgets.QMessageBox(self)
-    #         dlg.setWindowTitle ( "Success" )
-    #         dlg.setIcon(QtWidgets.QMessageBox.Icon.Information)
-    #         dlg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok )
-    #         dlg.setText ( "The length of ISBN or Purchased On Date is greater than today " )
-    #         dlg . exec ()
+    def login(self):
+        username = self.usernameLineEdit.text()
+        password = self.passwordLineEdit.text()
 
+        if not username or not password:
+            #alert
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Login Failed')
+            message_box.setText('Username and Password are required')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
+            return
+        # get all data from user table
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM [Users] WHERE User_Name = '{username}' AND Password = '{password}'")
+        user = cursor.fetchone()
+        if user:
+            if user[4] == True:
+                #alert 
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Login Successful')
+                message_box.setText(f"Welcome {user[1]}, UserID = {user[0]}")
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+            else:
+                # alert the user using message box that user is not approved
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Login Failed')
+                message_box.setText('User is not approved')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+        else:
+            # alert the user using message box that the login failed
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Login Failed')
+            message_box.setText('Invalid Username or Password')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
 
-    # def journalCheck(self):
-    #     if self.journalRadio.isChecked() and self.authorNameList.count() > 0:
-    #         self.authorNameList.clear()
-    #         dlg = QtWidgets.QMessageBox(self)
-    #         dlg.setWindowTitle ( "Error" )
-    #         dlg.setIcon(QtWidgets.QMessageBox.Icon.Information)
-    #         dlg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok )
-    #         dlg.setText ( " Journals can have no Author " )
-    #         dlg . exec ()
-
-    # def clearAuthorList(self):
-    #     self.authorNameList.clear()
-
-
-    # def authorNamePushButton_clicked(self):
-    #     # print(self.authorNameLineEdit.text())
-    #     if self.authorNameLineEdit.text() != '':
-    #         self.authorNameList.addItem(self.authorNameLineEdit.text())
-
-    # def enableIssuance(self):
-    #     if self.issuedCheckBox.isChecked():
-    #         self.issuedByLineEdit.setEnabled(True)
-    #         self.issuedOnDateEdit.setEnabled(True)
-    #         self.issuedByLineEdit.setReadOnly(False)
-    #         self.issuedOnDateEdit.setReadOnly(False)
-    #     else:
-    #         self.issuedByLineEdit.setEnabled(False)
-    #         self.issuedOnDateEdit.setEnabled(False)
+class Signup(QtWidgets.QMainWindow):
+    def __init__(self):
+    # Call the inherited classes __init__ method
+        super(Signup, self).__init__()
+        # Load the .ui file
+        uic.loadUi('./UIs/UserRegisteration.ui', self)
         
-    # def update_ComboBox(self, text):
-    #     self.subCategoryComboBox.clear()
-    #     if text == 'Database Systems':
-    #         self.subCategoryComboBox.addItems(("ERD", "SQL", "OLAP", "Data Mining"))
-    #     if text == 'OOP':
-    #         self.subCategoryComboBox.addItems(("C++", "Java"))
-    #     if text == 'Artificial Intelligence':
-    #         self.subCategoryComboBox.addItems(("Machine Learning", "Robotics", "Computer Vision"))
+        # Show the GUI
+        self.show()
+
+        # Connect the button to a function
+        self.pushButton.clicked.connect(self.signup)
+        # Connect the login button to a function which changes window to signup window
+        self.loginButton.clicked.connect(self.login_window)
+
+    def login_window(self):
+        self.login = Login()
+        self.login.show()
+        self.close()
+
+    def signup(self):
+        username = self.usernameLineEdit.text()
+        password = self.passwordLineEdit.text()
+        confirm_password = self.confirmPasswordLineEdit.text()
+
+        #check if user already exists
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM [Users] WHERE User_Name = '{username}'")
+        user = cursor.fetchone()
+        if user:
+            #alert
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Signup Failed')
+            message_box.setText('Username already exists')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
+            return
+        else:
+            if not username or not password or not confirm_password:
+                print('Username, Password and Confirm Password are required')
+                return
+            if password != confirm_password:
+                print('Password and Confirm Password must match')
+                return
+            date = datetime.datetime.now().date()
+            # make a user object but keep approved = false
+            cursor = connection.cursor()
+            cursor.execute(f"INSERT INTO [Users] (User_Name, Password, Creation_Date, Approved) VALUES ('{username}', '{password}', '{date}', '0')")
+            connection.commit()
+            #alert
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Signup Successful')
+            message_box.setText('User Registered Successfully')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
+
+
+    
+        
 
 
 # Create an instance of QtWidgets . QApplication
