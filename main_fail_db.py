@@ -12,6 +12,9 @@ class Ui(QtWidgets.QMainWindow):
         self.pushButton.clicked.connect(self.show_view_acc)
         self.pushButton_3.clicked.connect(self.show_report)
     
+
+
+    
     
     
     def show_transaction(self):
