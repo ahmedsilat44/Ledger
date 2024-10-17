@@ -277,6 +277,11 @@ class loadReport(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi('./UIs/ReportPage.ui', self)
         self.previous_page = previous_page
+        self.pushButton_2.clicked.connect(self.goback)
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()
     pass
 
 
@@ -297,6 +302,11 @@ class CreateAccount(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi('./UIs/UserCreateAccount.ui', self)
         self.previous_page = previous_page
+        self.pushButton_2.clicked.connect(self.goback)
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()
     pass
 
         
