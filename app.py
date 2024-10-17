@@ -216,7 +216,7 @@ class loadTransaction(QtWidgets.QMainWindow):
         uic.loadUi('./UIs/UserTransaction.ui', self)
         self.previous_page = previous_page
         self.pushButton_2.clicked.connect(self.create_acc)
-        self.pushButton.clicked.connect(self.goback)
+        self.pushButton_3.clicked.connect(self.goback)
 
     def goback(self):
         self.previous_page.show()
@@ -236,6 +236,8 @@ class loadAccount(QtWidgets.QMainWindow):
         self.previous_page = previous_page
         self.pushButton.clicked.connect(self.createAcc)
         self.pushButton_2.clicked.connect(self.showAccs)
+        self.pushButton_3.clicked.connect(self.goback)
+
     def goback(self):
         self.previous_page.show()
         self.close()
