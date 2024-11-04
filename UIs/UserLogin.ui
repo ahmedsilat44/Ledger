@@ -38,7 +38,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Username</string>
+        <string>ID</string>
        </property>
       </widget>
      </item>
