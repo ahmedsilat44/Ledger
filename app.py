@@ -484,7 +484,10 @@ class AdminMain(QtWidgets.QMainWindow):
         self.close()
         
     def show_reports(self):
-        pass
+        previous_page=AdminMain()
+        self.view_transac=AdminTransac(previous_page)
+        self.view_transac.show()
+        self.close()
 
 class AdminUserView(QtWidgets.QMainWindow):
     def __init__(self,previous_page):
@@ -510,7 +513,19 @@ class AdminUserView(QtWidgets.QMainWindow):
                 self.tableWidget.setItem(row_index, col_index, item)
         connection.close()
 
-
+class AdminTransac(QtWidgets.QMainWindow):
+    def __init__(self,previous_page):
+        super().__init__()
+        uic.loadUi('./UIs/AdminTransactions.ui',self)
+        self.previous_page = previous_page
+        self.pushButton.clicked.connect(self.goback)
+        #self.tableWidget.clear() 
+    
+        connection.close()
+    
+    def goback(self):
+        self.previous_page.show()
+        self.close()
 
 # Create an instance of QtWidgets . QApplication
 app = QtWidgets.QApplication(sys.argv)
