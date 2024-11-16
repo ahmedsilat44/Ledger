@@ -98,7 +98,7 @@ class Login(QtWidgets.QMainWindow):
                 message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
                 message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
                 message_box.exec()
-                if (user[0] == 1):
+                if (user[0] == 6):
                     self.admin = AdminMain()
                     self.admin.show()
                     self.close()
