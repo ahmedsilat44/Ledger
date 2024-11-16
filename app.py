@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
-import pypyodbc as odbc
+import pyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'DESKTOP-645TUK7'
+SERVER_NAME = 'DESKTOP-6JOJPQM'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -19,7 +19,7 @@ connection_string = f"""
     DATABASE={DATABASE_NAME};
     Trusted_Connection=yes;
     uid=<hu>;
-    password=<mariasamadproject>;
+    
 """
 connection = odbc.connect(connection_string)
 print('Connected to the database')
@@ -491,6 +491,22 @@ class loadAcc_History(QtWidgets.QMainWindow):
         uic.loadUi('./UIs/UserViewAccountHistory.ui', self)
         self.previous_page = previous_page
         self.pushButton.clicked.connect(self.goback)
+        self.acc_id=account_id
+        cursor=connection.cursor()
+        cursor.execute(f"select Transaction_ID,Generated_At,Amount,Description,Debit_Account_ID,Credit_Account_ID, (select Category_Name from Categories where Category_ID = Transactions.Category_ID  ) from Transactions where  Debit_Account_ID = {self.acc_id} or Credit_Account_ID = {self.acc_id}")
+        self.tableWidget.clear()
+        self.tableWidget.setRowCount(0)
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+        cursor.execute(f"SELECT * FROM [Accounts] WHERE Account_ID = {self.acc_id}")
+        acc=cursor.fetchone()
+        self.usernameLineEdit.setText(acc[1])
+        self.accountTypeLineEdit.setText(acc[2])
+        self.createdAtLineEdit.setText(acc[4])
+        self.accountBalanceLineEdit.setText(str(acc[3]))
 
     def goback(self):
         self.previous_page.show()
