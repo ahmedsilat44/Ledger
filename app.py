@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
-import pyodbc as odbc
+import pypyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'DESKTOP-6JOJPQM'
+SERVER_NAME = 'DESKTOP-645TUK7'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -19,7 +19,7 @@ connection_string = f"""
     DATABASE={DATABASE_NAME};
     Trusted_Connection=yes;
     uid=<hu>;
-    
+    password=<mariasamadproject>;
 """
 connection = odbc.connect(connection_string)
 print('Connected to the database')
@@ -504,22 +504,20 @@ class AdminUserView(QtWidgets.QMainWindow):
         self.previous_page = previous_page
         self.pushButton.clicked.connect(self.goback)
         self.tableWidget.clear()
-        self.fill_users()
-
-    def goback(self):
-        self.previous_page.show()
-        self.close()
-
-    def fill_users(self):
-        connection = odbc.connect(connection_string)
+        self.tableWidget.setRowCount(0)
         cursor= connection.cursor()
-        cursor.execute("select* from Users where User_ID != 6")
+        cursor.execute("select * from Users where User_ID != 6")
         for row_index, row_data in enumerate(cursor.fetchall()):
             self.tableWidget.insertRow(row_index)
             for col_index, cell_data in enumerate(row_data):
                 item = QTableWidgetItem(str(cell_data))
                 self.tableWidget.setItem(row_index, col_index, item)
-        connection.close()
+
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()
+
 
 class AdminTransac(QtWidgets.QMainWindow):
     def __init__(self,previous_page):
@@ -527,13 +525,47 @@ class AdminTransac(QtWidgets.QMainWindow):
         uic.loadUi('./UIs/AdminTransactions.ui',self)
         self.previous_page = previous_page
         self.pushButton.clicked.connect(self.goback)
-        #self.tableWidget.clear() 
+        self.tableWidget.clear()
+        self.tableWidget.setRowCount(0)
+        cursor= connection.cursor()
+        cursor.execute("select Transaction_ID,Generated_At,Amount,Description,Debit_Account_ID,Credit_Account_ID, (select Category_Name from Categories where Category_ID = Transactions.Category_ID  ) from Transactions")
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+                
+        userFilterComboBox = self.userFilterComboBox
+        userFilterComboBox.clear()
+        userFilterComboBox.addItem("All")
+        cursor.execute("select * from Users where User_ID != 6")
+        for user in cursor.fetchall():
+            userFilterComboBox.addItem(user[1], user)
+
+        self.userFilterComboBox.currentIndexChanged.connect(self.filter_transactions)         
     
-        connection.close()
     
+    def filter_transactions(self):
+        userFilterComboBox = self.userFilterComboBox
+        user = userFilterComboBox.currentData()
+        cursor = connection.cursor()
+        if user:
+            cursor.execute(f"select Transaction_ID,Generated_At,Amount,Description,Debit_Account_ID,Credit_Account_ID, (select Category_Name from Categories where Category_ID = Transactions.Category_ID  ) from Transactions where  Debit_Account_ID in (select Account_ID from Accounts where User_ID = (select User_ID from Users where User_ID = {user[0]})) or Credit_Account_ID in (select Account_ID from Accounts where User_ID = (select User_ID from Users where User_ID = {user[0]}))")
+        else:
+            cursor.execute("select Transaction_ID,Generated_At,Amount,Description,Debit_Account_ID,Credit_Account_ID, (select Category_Name from Categories where Category_ID = Transactions.Category_ID  ) from Transactions")
+        self.tableWidget.clear()
+        self.tableWidget.setRowCount(0)
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+
     def goback(self):
         self.previous_page.show()
         self.close()
+
+    
 
 # Create an instance of QtWidgets . QApplication
 app = QtWidgets.QApplication(sys.argv)
