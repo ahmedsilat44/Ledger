@@ -27,10 +27,10 @@ print('Connected to the database')
 
 # get all data from user table
 cursor = connection.cursor()
-cursor.execute('SELECT * FROM [Users]')
+cursor.execute('SELECT * FROM [Accounts]')
 for row in cursor.fetchall():
-    print(row)
-# connection.close()
+    print("Account Name : " + row[1])
+
 
 
 import datetime
@@ -38,7 +38,11 @@ import datetime
 
 #variable so that when back button is pressed makes sure that the previous page is loaded
 
- 
+global Logged_in_userID
+
+Logged_in_userID = 0
+
+
 
 
 class Login(QtWidgets.QMainWindow):
@@ -99,6 +103,9 @@ class Login(QtWidgets.QMainWindow):
                 message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
                 message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
                 message_box.exec()
+                global Logged_in_userID
+                Logged_in_userID = user[0]
+                print(Logged_in_userID)
                 if (user[0] == 6):
                     self.admin = AdminMain()
                     self.admin.show()
@@ -123,6 +130,7 @@ class Login(QtWidgets.QMainWindow):
             message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
             message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
             message_box.exec()
+        
 
 class Signup(QtWidgets.QMainWindow):
     def __init__(self):
@@ -182,6 +190,7 @@ class Signup(QtWidgets.QMainWindow):
             message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
             message_box.exec()
 
+        
 
     
 class Ui(QtWidgets.QMainWindow):
@@ -234,8 +243,44 @@ class loadTransaction(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi('./UIs/UserTransaction.ui', self)
         self.previous_page = previous_page
+        global Logged_in_userID
         self.pushButton_2.clicked.connect(self.create_acc)
         self.pushButton_3.clicked.connect(self.goback)
+        debitCombo = self.debitAccountComboBox
+        creditCombo = self.creditAccountComboBox
+        categoryCombo = self.categoryComboBox
+        debitCombo.clear()
+        creditCombo.clear()
+        categoryCombo.clear()
+    
+
+        self.pushButton.clicked.connect(self.create_transaction)
+        debitCombo.currentIndexChanged.connect(self.debit_account_changed)
+        cursor = connection.cursor()
+        print(Logged_in_userID , "Logged in user ID")
+        cursor.execute(f"SELECT * FROM [Accounts] where User_ID = {Logged_in_userID}")
+        accounts = cursor.fetchall()
+        for account in accounts:
+            debitCombo.addItem(account[1],account)
+
+        cursor.execute(f"Select * from Categories")
+        categories = cursor.fetchall()
+        for category in categories:
+            categoryCombo.addItem(category[1],category)
+        
+
+        
+    def debit_account_changed(self):
+        debitCombo = self.debitAccountComboBox
+        creditCombo = self.creditAccountComboBox
+        creditCombo.clear()
+        debit_account = debitCombo.currentData()
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM [Accounts] where User_ID = {Logged_in_userID} and Account_ID != {debit_account[0]}")
+        accounts = cursor.fetchall()
+        for account in accounts:
+            print(account[1])
+            creditCombo.addItem(account[1],account)
 
     def goback(self):
         self.previous_page.show()
@@ -246,7 +291,92 @@ class loadTransaction(QtWidgets.QMainWindow):
         self.create_pg = CreateAccount(previous_page)
         self.create_pg.show()
         self.close()
-    pass
+    
+    def create_transaction(self):
+        debitCombo = self.debitAccountComboBox
+        creditCombo = self.creditAccountComboBox
+        categoryCombo = self.categoryComboBox
+        print(debitCombo.currentData()[0], "Debit Account ID", creditCombo.currentData()[0], "Credit Account ID")
+        print(debitCombo.currentData()[1], "Debit Account Name", creditCombo.currentData()[1], "Credit Account Name")
+
+        amount = self.amountLineEdit.text()
+        try:
+            amount = float(amount)
+        except:
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Transaction Failed')
+            message_box.setText('Amount must be a number')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
+            return
+        
+        description = self.descriptionLineEdit.text()
+        if not amount or not description:
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Transaction Failed')
+            message_box.setText('Amount and Description are required')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
+            return
+        cursor = connection.cursor()
+
+
+        cursor.execute(f"INSERT INTO [Transactions] (Generated_At, Amount, Description, Debit_Account_ID, Credit_Account_ID, Category_ID ) Values (GETDATE(), {amount}, '{description}', {debitCombo.currentData()[0]}, {creditCombo.currentData()[0]}, {categoryCombo.currentData()[0]})")
+        
+        
+        
+        # add balance to both accounts depending on the category of account ( asset , equity , liability, revenue, expense)
+        # get the account category of the account
+        cursor.execute(f"SELECT * FROM [Accounts] WHERE Account_ID = {debitCombo.currentData()[0]}")
+        debit_account = cursor.fetchone()
+        match debit_account[2]:
+            case 'Asset':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance + {amount} WHERE Account_ID = {debitCombo.currentData()[0]}")
+            case 'Equity':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance - {amount} WHERE Account_ID = {debitCombo.currentData()[0]}")
+            case 'Liability':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance - {amount} WHERE Account_ID = {debitCombo.currentData()[0]}")
+            case 'Revenue':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance - {amount} WHERE Account_ID = {debitCombo.currentData()[0]}")
+            case 'Expense':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance + {amount} WHERE Account_ID = {debitCombo.currentData()[0]}")
+
+        # commit the changes
+        connection.commit()
+
+        cursor.execute(f"SELECT * FROM [Accounts] WHERE Account_ID = {creditCombo.currentData()[0]}")
+        credit_account = cursor.fetchone()
+        match credit_account[2]:
+            case 'Asset':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance - {amount} WHERE Account_ID = {creditCombo.currentData()[0]}")
+            case 'Equity':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance + {amount} WHERE Account_ID = {creditCombo.currentData()[0]}")
+            case 'Liability':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance + {amount} WHERE Account_ID = {creditCombo.currentData()[0]}")
+            case 'Revenue':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance + {amount} WHERE Account_ID = {creditCombo.currentData()[0]}")
+            case 'Expense':
+                cursor.execute(f"UPDATE [Accounts] SET Balance = Balance - {amount} WHERE Account_ID = {creditCombo.currentData()[0]}")
+        
+        connection.commit()
+
+        #transaction committed result
+
+        cursor.execute(f"Select max(Transaction_ID) from Transactions")
+        transaction_id = cursor.fetchone()
+
+
+        
+
+        message_box = QtWidgets.QMessageBox()
+        message_box.setWindowTitle('Transaction Successful')
+        message_box.setText('Transaction Created Successfully, Transaction ID = ' + str(transaction_id[0]))
+        message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+        message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+        message_box.exec()
+        self.goback()
 
 class loadAccount(QtWidgets.QMainWindow):
     def __init__(self, previous_page):
@@ -380,7 +510,7 @@ class AdminUserView(QtWidgets.QMainWindow):
                 self.tableWidget.setItem(row_index, col_index, item)
         connection.close()
 
-
+    
 
 # Create an instance of QtWidgets . QApplication
 app = QtWidgets.QApplication(sys.argv)
