@@ -1,4 +1,3 @@
-
 import sys
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QMainWindow
@@ -27,10 +26,10 @@ print('Connected to the database')
 
 # get all data from user table
 cursor = connection.cursor()
-cursor.execute('SELECT * FROM [Accounts]')
+cursor.execute('SELECT * FROM [Users]')
 for row in cursor.fetchall():
     print(row)
-connection.close()
+# connection.close()
 
 
 import datetime
@@ -64,21 +63,31 @@ class Login(QtWidgets.QMainWindow):
 
 
     def login(self):
-        username = self.usernameLineEdit.text()
+        id = self.usernameLineEdit.text()
         password = self.passwordLineEdit.text()
 
-        if not username or not password:
-            #alert
-            message_box = QtWidgets.QMessageBox()
-            message_box.setWindowTitle('Login Failed')
-            message_box.setText('Username and Password are required')
-            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
-            message_box.exec()
-            return
+        if not id or not password:
+            if type(id) != int:
+                # alert the user using message box that the login failed
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Login Failed')
+                message_box.setText('Invalid ID or Password')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+                return
+            else:
+                #alert
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Login Failed')
+                message_box.setText('ID and Password are required')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+                return
         # get all data from user table
         cursor = connection.cursor()
-        cursor.execute(f"SELECT * FROM [Users] WHERE User_Name = '{username}' AND Password = '{password}'")
+        cursor.execute(f"SELECT * FROM [Users] WHERE User_ID = '{id}' AND Password = '{password}'")
         user = cursor.fetchone()
         if user:
             if user[4] == True:
@@ -89,14 +98,19 @@ class Login(QtWidgets.QMainWindow):
                 message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
                 message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
                 message_box.exec()
-                self.ui = Ui()
-                self.ui.show()
-                self.close()
+                if (user[0] == 1):
+                    self.admin = AdminMain()
+                    self.admin.show()
+                    self.close()
+                else:
+                    self.ui = Ui()
+                    self.ui.show()
+                    self.close()
             else:
                 # alert the user using message box that user is not approved
                 message_box = QtWidgets.QMessageBox()
                 message_box.setWindowTitle('Login Failed')
-                message_box.setText('User is not approved')
+                message_box.setText('User ID is not approved')
                 message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
                 message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
                 message_box.exec()
@@ -104,7 +118,7 @@ class Login(QtWidgets.QMainWindow):
             # alert the user using message box that the login failed
             message_box = QtWidgets.QMessageBox()
             message_box.setWindowTitle('Login Failed')
-            message_box.setText('Invalid Username or Password')
+            message_box.setText('Invalid ID or Password')
             message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
             message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
             message_box.exec()
@@ -181,11 +195,14 @@ class Ui(QtWidgets.QMainWindow):
         self.pushButton_2.clicked.connect(self.show_transaction)
         self.pushButton.clicked.connect(self.show_view_acc)
         self.pushButton_3.clicked.connect(self.show_report)
-    
+        self.logoutButton.clicked.connect(self.logout)
 
 
     
-    
+    def logout(self):
+        self.view_pg = Login()
+        self.view_pg.show()
+        self.close()
     
     def show_transaction(self):
         previous_page = Ui()
@@ -313,6 +330,26 @@ class CreateAccount(QtWidgets.QMainWindow):
     pass
 
         
+class AdminMain(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('./UIs/AdminMain.ui', self)
+        self.pushButton.clicked.connect(self.show_users)
+        self.pushButton_2.clicked.connect(self.show_reports)
+        self.logoutButton.clicked.connect(self.logout)
+
+
+    
+    def logout(self):
+        self.view_pg = Login()
+        self.view_pg.show()
+        self.close()
+    
+
+    def show_users(self):
+        pass
+    def show_reports(self):
+        pass
 
 
 
@@ -320,7 +357,6 @@ class CreateAccount(QtWidgets.QMainWindow):
 # Create an instance of QtWidgets . QApplication
 app = QtWidgets.QApplication(sys.argv)
 
-# window = Ui() # Create an instance of our class
 window = Login() # Create an instance of our class
 window.show() # Show the instance
-app.exec()
+app.exec() # Start the application
