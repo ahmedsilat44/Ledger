@@ -6,10 +6,11 @@ from PyQt6.QtWidgets import QStackedLayout
 from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
 from PyQt6.QtCore import QDate
-import pypyodbc as odbc
+from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
+import pyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'DESKTOP-645TUK7'
+SERVER_NAME = 'DESKTOP-6JOJPQM'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -18,7 +19,7 @@ connection_string = f"""
     DATABASE={DATABASE_NAME};
     Trusted_Connection=yes;
     uid=<hu>;
-    password=<mariasamadproject>;
+    
 """
 connection = odbc.connect(connection_string)
 print('Connected to the database')
@@ -347,10 +348,37 @@ class AdminMain(QtWidgets.QMainWindow):
     
 
     def show_users(self):
-        pass
+        previous_page=AdminMain()
+        self.user_view=AdminUserView(previous_page)
+        self.user_view.show()
+        self.close()
+        
     def show_reports(self):
         pass
 
+class AdminUserView(QtWidgets.QMainWindow):
+    def __init__(self,previous_page):
+        super().__init__()
+        uic.loadUi('./UIs/AdminUserView.ui',self)
+        self.fill_users()
+        self.previous_page = previous_page
+        self.pushButton.clicked.connect(self.goback)
+        self.tableWidget.clear()
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()
+
+    def fill_users(self):
+        connection = odbc.connect(connection_string)
+        cursor= connection.cursor()
+        cursor.execute("select* from Users where User_ID != 6")
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+        connection.close()
 
 
 
