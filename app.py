@@ -386,7 +386,7 @@ class loadAccount(QtWidgets.QMainWindow):
         self.pushButton.clicked.connect(self.createAcc)
         self.pushButton_2.clicked.connect(self.showAccs)
         self.pushButton_3.clicked.connect(self.goback)
-
+       
     def goback(self):
         self.previous_page.show()
         self.close()
@@ -411,6 +411,14 @@ class loadViewAcc(QtWidgets.QMainWindow):
         self.previous_page = prev
         self.pushButton.clicked.connect(self.show_acc_history)
         self.pushButton_2.clicked.connect(self.goback)
+        connection = odbc.connect(connection_string)
+        cursor= connection.cursor()
+        cursor.execute(f"SELECT Account_Name,Account_Type,Created_At,Balance FROM [Accounts] where User_ID = {Logged_in_userID} ")
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
 
     def goback(self):
         self.previous_page.show()
