@@ -323,3 +323,4 @@ app = QtWidgets.QApplication(sys.argv)
 # window = Ui() # Create an instance of our class
 window = Login() # Create an instance of our class
 window.show() # Show the instance
+app.exec()
