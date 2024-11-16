@@ -412,24 +412,64 @@ class loadViewAcc(QtWidgets.QMainWindow):
         self.pushButton.clicked.connect(self.show_acc_history)
         self.pushButton_2.clicked.connect(self.goback)
         cursor= connection.cursor()
-        cursor.execute(f"SELECT Account_Name,Account_Type,Created_At,Balance FROM [Accounts] where User_ID = {Logged_in_userID} ")
-        print(Logged_in_userID)
+        cursor.execute(f"SELECT Account_ID,Account_Name,Account_Type,Created_At,Balance FROM [Accounts] where User_ID = {Logged_in_userID} ")
         for row_index, row_data in enumerate(cursor.fetchall()):
             self.tableWidget.insertRow(row_index)
             for col_index, cell_data in enumerate(row_data):
                 item = QTableWidgetItem(str(cell_data))
                 self.tableWidget.setItem(row_index, col_index, item)
-                print(cell_data)
+
+        #  filter the accounts based on the account type
+        self.accountTypeComboBox.currentIndexChanged.connect(self.filter_accounts)
+
+
+    def filter_accounts(self):
+        # if selected filter is All, show all accounts
+        accountTypeComboBox = self.accountTypeComboBox
+        account_type = accountTypeComboBox.currentText()
+        if account_type == 'All':
+            cursor = connection.cursor()
+            cursor.execute(f"SELECT Account_ID,Account_Name,Account_Type,Created_At,Balance FROM [Accounts] where User_ID = {Logged_in_userID}")
+            self.tableWidget.clear()
+            self.tableWidget.setRowCount(0)
+            for row_index, row_data in enumerate(cursor.fetchall()):
+                self.tableWidget.insertRow(row_index)
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(str(cell_data))
+                    self.tableWidget.setItem(row_index, col_index, item)
+        else:
+            cursor = connection.cursor()
+            cursor.execute(f"SELECT Account_ID,Account_Name,Account_Type,Created_At,Balance FROM [Accounts] where User_ID = {Logged_in_userID} and Account_Type = '{account_type}'")
+            self.tableWidget.clear()
+            self.tableWidget.setRowCount(0)
+            for row_index, row_data in enumerate(cursor.fetchall()):
+                self.tableWidget.insertRow(row_index)
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(str(cell_data))
+                    self.tableWidget.setItem(row_index, col_index, item)
+        
+
 
     def goback(self):
         self.previous_page.show()
         self.close()
     
     def show_acc_history(self):
-        previous_page = self
-        self.history_pg = loadAcc_History(previous_page)
-        self.history_pg.show()
-        self.close()
+        #  check if table widget has a selected row if it does show the account history
+        if self.tableWidget.currentRow() == -1:
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Account History Failed')
+            message_box.setText('Select an account to view history')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
+            return
+        else:
+            account_id = self.tableWidget.item(self.tableWidget.currentRow(), 0).text()
+            previous_page = self
+            self.history_pg = loadAcc_History(previous_page,account_id)
+            self.history_pg.show()
+            self.close()
     pass
 
 class loadReport(QtWidgets.QMainWindow):
@@ -446,7 +486,7 @@ class loadReport(QtWidgets.QMainWindow):
 
 
 class loadAcc_History(QtWidgets.QMainWindow):
-    def __init__(self, previous_page):
+    def __init__(self, previous_page,account_id):
         super().__init__()
         uic.loadUi('./UIs/UserViewAccountHistory.ui', self)
         self.previous_page = previous_page
@@ -463,6 +503,30 @@ class CreateAccount(QtWidgets.QMainWindow):
         uic.loadUi('./UIs/UserCreateAccount.ui', self)
         self.previous_page = previous_page
         self.pushButton_2.clicked.connect(self.goback)
+        self.pushButton.clicked.connect(self.create_account)
+
+    def create_account(self):
+        account_name = self.usernameLineEdit.text()
+        account_type = self.accountTypeComboBox.currentText()
+        descritpion = self.descriptionLineEdit.text()
+        if not account_name or not account_type:
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Account Creation Failed')
+            message_box.setText('Account Name and Account Type are required')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
+            return
+        cursor = connection.cursor()
+        cursor.execute(f"INSERT INTO [Accounts] (Account_Name, Account_Type, Balance,Created_At, Description, User_ID) VALUES ('{account_name}', '{account_type}', 0, GETDATE(), '{descritpion}',  {Logged_in_userID})")
+        connection.commit()
+        message_box = QtWidgets.QMessageBox()
+        message_box.setWindowTitle('Account Created')
+        message_box.setText('Account Created Successfully')
+        message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+        message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+        message_box.exec()
+        
 
     def goback(self):
         self.previous_page.show()
@@ -507,6 +571,37 @@ class AdminUserView(QtWidgets.QMainWindow):
         self.tableWidget.clear()
         self.tableWidget.setRowCount(0)
         cursor= connection.cursor()
+        cursor.execute("select * from Users where User_ID != 6")
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+
+        #  Toggle the user approval status when the button is clicked and check if a cell is selected
+        self.pushButton_2.clicked.connect(self.toggle_approval)
+
+    def toggle_approval(self):
+        print(self.tableWidget.currentRow())
+        if self.tableWidget.currentRow() == -1:
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle('Approval Failed')
+            message_box.setText('Select a user to approve/disapprove')
+            message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            message_box.exec()
+            return
+        user = self.tableWidget.item(self.tableWidget.currentRow(), 0).text()
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM [Users] WHERE User_ID = {user}")
+        user = cursor.fetchone()
+        if user[4] == True:
+            cursor.execute(f"UPDATE [Users] SET Approved = 0 WHERE User_ID = {user[0]}")
+        else:
+            cursor.execute(f"UPDATE [Users] SET Approved = 1 WHERE User_ID = {user[0]}")
+        connection.commit()
+        self.tableWidget.clear()
+        self.tableWidget.setRowCount(0)
         cursor.execute("select * from Users where User_ID != 6")
         for row_index, row_data in enumerate(cursor.fetchall()):
             self.tableWidget.insertRow(row_index)
