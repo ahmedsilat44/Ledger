@@ -31,6 +31,11 @@
     </property>
     <column>
      <property name="text">
+      <string>Account_ID</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
       <string>Name</string>
      </property>
     </column>
@@ -166,7 +171,7 @@
       <widget class="QComboBox" name="accountTypeComboBox">
        <item>
         <property name="text">
-         <string>None</string>
+         <string>All</string>
         </property>
        </item>
        <item>
