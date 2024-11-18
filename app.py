@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
-import pyodbc as odbc
+import pypyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'DESKTOP-6JOJPQM'
+SERVER_NAME = 'LAPTOP-RL1G882R'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -27,9 +27,9 @@ print('Connected to the database')
 
 # get all data from user table
 cursor = connection.cursor()
-cursor.execute('SELECT * FROM [Accounts]')
+cursor.execute('SELECT * FROM [Users]')
 for row in cursor.fetchall():
-    print("Account Name : " + row[1])
+    print(row)
 
 
 
@@ -106,7 +106,7 @@ class Login(QtWidgets.QMainWindow):
                 global Logged_in_userID
                 Logged_in_userID = user[0]
                 print(Logged_in_userID)
-                if (user[0] == 6):
+                if (user[1] == 'admin'):
                     self.admin = AdminMain()
                     self.admin.show()
                     self.close()
@@ -182,10 +182,13 @@ class Signup(QtWidgets.QMainWindow):
             cursor = connection.cursor()
             cursor.execute(f"INSERT INTO [Users] (User_Name, Password, Creation_Date, Approved) VALUES ('{username}', '{password}', '{date}', '0')")
             connection.commit()
+            #  Get the latest user added by selecting max user id
+            cursor.execute(f"Select max(User_ID) from Users")
+            user_id = cursor.fetchone()
             #alert
             message_box = QtWidgets.QMessageBox()
             message_box.setWindowTitle('Signup Successful')
-            message_box.setText('User Registered Successfully')
+            message_box.setText(f'User Registered Successfully, User id = { user_id[0]}')
             message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
             message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
             message_box.exec()
@@ -587,7 +590,7 @@ class AdminUserView(QtWidgets.QMainWindow):
         self.tableWidget.clear()
         self.tableWidget.setRowCount(0)
         cursor= connection.cursor()
-        cursor.execute("select * from Users where User_ID != 6")
+        cursor.execute("select * from Users where User_Name != 'admin'")
         for row_index, row_data in enumerate(cursor.fetchall()):
             self.tableWidget.insertRow(row_index)
             for col_index, cell_data in enumerate(row_data):
@@ -618,7 +621,7 @@ class AdminUserView(QtWidgets.QMainWindow):
         connection.commit()
         self.tableWidget.clear()
         self.tableWidget.setRowCount(0)
-        cursor.execute("select * from Users where User_ID != 6")
+        cursor.execute("select * from Users where User_Name != 'admin'")
         for row_index, row_data in enumerate(cursor.fetchall()):
             self.tableWidget.insertRow(row_index)
             for col_index, cell_data in enumerate(row_data):
@@ -650,7 +653,7 @@ class AdminTransac(QtWidgets.QMainWindow):
         userFilterComboBox = self.userFilterComboBox
         userFilterComboBox.clear()
         userFilterComboBox.addItem("All")
-        cursor.execute("select * from Users where User_ID != 6")
+        cursor.execute("select * from Users where Username != 'admin'")
         for user in cursor.fetchall():
             userFilterComboBox.addItem(user[1], user)
 
