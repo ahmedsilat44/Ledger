@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>480</width>
-    <height>640</height>
+    <width>642</width>
+    <height>821</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,8 +23,8 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>190</x>
-      <y>20</y>
+      <x>280</x>
+      <y>0</y>
       <width>221</width>
       <height>41</height>
      </rect>
@@ -32,7 +32,7 @@
     <property name="font">
      <font>
       <family>Roboto</family>
-      <pointsize>12</pointsize>
+      <pointsize>15</pointsize>
      </font>
     </property>
     <property name="styleSheet">
@@ -46,9 +46,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>90</y>
-      <width>441</width>
-      <height>191</height>
+      <y>50</y>
+      <width>601</width>
+      <height>81</height>
      </rect>
     </property>
     <layout class="QFormLayout" name="formLayout">
@@ -59,13 +59,6 @@
       <widget class="QLabel" name="MonthLabel">
        <property name="text">
         <string>Month</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="YearLabel">
-       <property name="text">
-        <string>Year</string>
        </property>
       </widget>
      </item>
@@ -133,16 +126,34 @@
        </item>
       </widget>
      </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="reportTypeLabel">
+       <property name="text">
+        <string>Report Type</string>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QComboBox" name="reportTypeComboBox">
+       <item>
+        <property name="text">
+         <string>Income Statement</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Cash Flow</string>
+        </property>
+       </item>
+      </widget>
      </item>
     </layout>
    </widget>
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>340</y>
+      <x>40</x>
+      <y>770</y>
       <width>191</width>
       <height>41</height>
      </rect>
@@ -166,14 +177,14 @@
 </string>
     </property>
     <property name="text">
-     <string>View Report</string>
+     <string>Generate</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_2">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>400</y>
+      <x>430</x>
+      <y>770</y>
       <width>191</width>
       <height>41</height>
      </rect>
@@ -199,6 +210,231 @@
     <property name="text">
      <string>Back</string>
     </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>350</y>
+      <width>601</width>
+      <height>201</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Expense Transactions</string>
+    </property>
+    <widget class="QTableWidget" name="tableWidget_2">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>20</y>
+       <width>571</width>
+       <height>161</height>
+      </rect>
+     </property>
+     <attribute name="horizontalHeaderCascadingSectionResizes">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>72</number>
+     </attribute>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="verticalHeaderCascadingSectionResizes">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="verticalHeaderDefaultSectionSize">
+      <number>22</number>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>Desc</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Generated At</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Amount</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Debit Acc</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Credit Acc</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Date</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Category</string>
+      </property>
+     </column>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>140</y>
+      <width>601</width>
+      <height>201</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Income Transactions</string>
+    </property>
+    <widget class="QTableWidget" name="tableWidget_3">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>20</y>
+       <width>571</width>
+       <height>161</height>
+      </rect>
+     </property>
+     <attribute name="horizontalHeaderCascadingSectionResizes">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>72</number>
+     </attribute>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="verticalHeaderCascadingSectionResizes">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="verticalHeaderDefaultSectionSize">
+      <number>22</number>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>Desc</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Generated At</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Amount</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Debit Acc</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Credit Acc</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Date</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Category</string>
+      </property>
+     </column>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="formLayoutWidget_3">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>580</y>
+      <width>361</width>
+      <height>131</height>
+     </rect>
+    </property>
+    <layout class="QFormLayout" name="IncomeStatementForm">
+     <property name="verticalSpacing">
+      <number>27</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="incomeLabel_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Income</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="incomeLineEdit_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>8</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="expenseLabel_2">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Expense</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="expenseLineEdit_2"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="netRevenueLabel_2">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Net Revenue</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="netRevenueLineEdit_2"/>
+     </item>
+    </layout>
    </widget>
   </widget>
  </widget>
