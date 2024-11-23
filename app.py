@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
-import pypyodbc as odbc
+import pyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'LAPTOP-RL1G882R'
+SERVER_NAME = 'DESKTOP-6JOJPQM'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -481,10 +481,42 @@ class loadReport(QtWidgets.QMainWindow):
         uic.loadUi('./UIs/ReportPage.ui', self)
         self.previous_page = previous_page
         self.pushButton_2.clicked.connect(self.goback)
-
+        self.reportTypeComboBox.currentTextChanged.connect(self.update_label)
+        self.pushButton.clicked.connect(self.generate_report)
+    
     def goback(self):
         self.previous_page.show()
         self.close()
+
+    def update_label(self):
+        type=self.reportTypeComboBox.currentText()
+        if type == 'Income Statement':
+            self.incomeLabel_2.setText('Income')
+            self.expenseLabel_2.setText('Expense')
+            self.netRevenueLabel_2.setText('Net Revenue')
+        elif type == 'Cash Flow':
+            self.incomeLabel_2.setText('Cash Inflow')
+            self.expenseLabel_2.setText('Cash Outflow')
+            self.netRevenueLabel_2.setText('Net Cash Flow')
+    
+    def generate_report(self):
+        type=self.reportTypeComboBox.currentText()
+        cursor = connection.cursor()
+        if type == 'Income Statement':
+            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=1) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Income')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID}))")
+            for row_index, row_data in enumerate(cursor.fetchall()):
+                self.tableWidget_3.insertRow(row_index)
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(str(cell_data))
+                    self.tableWidget_3.setItem(row_index, col_index, item)
+            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=2) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Expense')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID}))")
+            for row_index, row_data in enumerate(cursor.fetchall()):
+                self.tableWidget_2.insertRow(row_index)
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(str(cell_data))
+                    self.tableWidget_2.setItem(row_index, col_index, item)
+            
+
     pass
 
 
