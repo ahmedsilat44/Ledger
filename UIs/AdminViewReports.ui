@@ -14,17 +14,23 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">background:white</string>
+   </property>
    <widget class="QTableWidget" name="tableWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>70</y>
-      <width>461</width>
+      <width>431</width>
       <height>471</height>
      </rect>
     </property>
     <attribute name="horizontalHeaderDefaultSectionSize">
-     <number>72</number>
+     <number>150</number>
+    </attribute>
+    <attribute name="horizontalHeaderMinimumSectionSize">
+     <number>50</number>
     </attribute>
     <attribute name="verticalHeaderDefaultSectionSize">
      <number>22</number>
@@ -41,7 +47,7 @@
     </column>
     <column>
      <property name="text">
-      <string>ReportMonth</string>
+      <string>ReportMonthYear</string>
      </property>
     </column>
     <column>
@@ -73,8 +79,8 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>180</x>
-      <y>10</y>
+      <x>190</x>
+      <y>20</y>
       <width>221</width>
       <height>41</height>
      </rect>
@@ -95,8 +101,8 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>550</y>
+      <x>140</x>
+      <y>570</y>
       <width>191</width>
       <height>41</height>
      </rect>
