@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
-import pypyodbc as odbc
+import pyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'DESKTOP-645TUK7'
+SERVER_NAME = 'DESKTOP-6JOJPQM'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -644,8 +644,9 @@ class AdminMain(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi('./UIs/AdminMain.ui', self)
         self.pushButton.clicked.connect(self.show_users)
-        self.pushButton_2.clicked.connect(self.show_reports)
+        self.pushButton_2.clicked.connect(self.show_transac)
         self.logoutButton.clicked.connect(self.logout)
+        self.pushButton_3.clicked.connect(self.show_report)
 
 
     
@@ -661,10 +662,16 @@ class AdminMain(QtWidgets.QMainWindow):
         self.user_view.show()
         self.close()
         
-    def show_reports(self):
+    def show_transac(self):
         previous_page=AdminMain()
         self.view_transac=AdminTransac(previous_page)
         self.view_transac.show()
+        self.close()
+
+    def show_report(self):
+        previous_page = AdminMain()
+        self.view_pg = AdminReport(previous_page)
+        self.view_pg.show()
         self.close()
 
 class AdminUserView(QtWidgets.QMainWindow):
@@ -766,7 +773,25 @@ class AdminTransac(QtWidgets.QMainWindow):
         self.previous_page.show()
         self.close()
 
-    
+class AdminReport(QtWidgets.QMainWindow):
+    def __init__(self,previous_page):
+        super().__init__()
+        self.previous_page = previous_page
+        uic.loadUi('./UIs/AdminViewReports.ui',self)
+        self.pushButton.clicked.connect(self.goback)
+        self.tableWidget.setRowCount(0)
+        cursor= connection.cursor()
+        cursor.execute("select * from Reports")
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()    
+
 
 # Create an instance of QtWidgets . QApplication
 app = QtWidgets.QApplication(sys.argv)
