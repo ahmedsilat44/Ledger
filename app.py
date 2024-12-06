@@ -69,6 +69,11 @@ class Login(QtWidgets.QMainWindow):
 
     def login(self):
         id = self.usernameLineEdit.text()
+        # check if id is a number
+        if(id.isdigit()):
+            id = int(id)
+        else:
+            id = 0
         password = self.passwordLineEdit.text()
 
         if not id or not password:
