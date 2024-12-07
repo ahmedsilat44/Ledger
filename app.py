@@ -239,7 +239,7 @@ class Ui(QtWidgets.QMainWindow):
 
     def show_report(self):
         previous_page = Ui()
-        self.view_pg = loadReport(previous_page)
+        self.view_pg = UserReport(previous_page)
         self.view_pg.show()
         self.close()
 
@@ -680,6 +680,52 @@ class loadReport(QtWidgets.QMainWindow):
 
         
 
+    pass
+
+class UserReport(QtWidgets.QMainWindow):
+    def __init__(self, previous_page):
+        super().__init__()
+        uic.loadUi('./UIs/UserReports.ui', self)
+        self.previous_page = previous_page
+        self.pushButton.clicked.connect(self.generate_report)
+        self.pushButton_2.clicked.connect(self.show_report)
+        self.pushButton_3.clicked.connect(self.goback)
+
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()
+        
+    def generate_report(self):
+        previous_page = self
+        self.report_pg = loadReport(previous_page)
+        self.report_pg.show()
+        self.close()
+
+    def show_report(self):
+        previous_page = self
+        self.report_pg = UserViewReports(previous_page)
+        self.report_pg.show()
+        self.close()
+
+
+class UserViewReports(QtWidgets.QMainWindow):
+    def __init__(self, previous_page):
+        super().__init__()
+        uic.loadUi('./UIs/UserViewReports.ui', self)
+        self.previous_page = previous_page
+        self.pushButton.clicked.connect(self.goback)
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM [Reports] WHERE User_ID = {Logged_in_userID}")
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+    
+    def goback(self):
+        self.previous_page.show()
+        self.close()
     pass
 
 
