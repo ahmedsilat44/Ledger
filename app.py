@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
 import pypyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'LAPTOP-RL1G882R'
+SERVER_NAME = 'DESKTOP-645TUK7'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -69,6 +69,11 @@ class Login(QtWidgets.QMainWindow):
 
     def login(self):
         id = self.usernameLineEdit.text()
+        # check if id is a number
+        if(id.isdigit()):
+            id = int(id)
+        else:
+            id = 0
         password = self.passwordLineEdit.text()
 
         if not id or not password:
@@ -106,7 +111,10 @@ class Login(QtWidgets.QMainWindow):
                 global Logged_in_userID
                 Logged_in_userID = user[0]
                 print(Logged_in_userID)
-                if (user[1] == 'admin'):
+                username = ''
+                username = user[1]
+                username = username.lower()
+                if (username.find('admin') != -1):
                     self.admin = AdminMain()
                     self.admin.show()
                     self.close()
@@ -231,7 +239,7 @@ class Ui(QtWidgets.QMainWindow):
 
     def show_report(self):
         previous_page = Ui()
-        self.view_pg = loadReport(previous_page)
+        self.view_pg = UserReport(previous_page)
         self.view_pg.show()
         self.close()
 
@@ -433,7 +441,7 @@ class loadViewAcc(QtWidgets.QMainWindow):
         if account_type == 'All':
             cursor = connection.cursor()
             cursor.execute(f"SELECT Account_ID,Account_Name,Account_Type,Created_At,Balance FROM [Accounts] where User_ID = {Logged_in_userID}")
-            self.tableWidget.clear()
+            # self.tableWidget.clear()
             self.tableWidget.setRowCount(0)
             for row_index, row_data in enumerate(cursor.fetchall()):
                 self.tableWidget.insertRow(row_index)
@@ -443,7 +451,7 @@ class loadViewAcc(QtWidgets.QMainWindow):
         else:
             cursor = connection.cursor()
             cursor.execute(f"SELECT Account_ID,Account_Name,Account_Type,Created_At,Balance FROM [Accounts] where User_ID = {Logged_in_userID} and Account_Type = '{account_type}'")
-            self.tableWidget.clear()
+            # self.tableWidget.clear()
             self.tableWidget.setRowCount(0)
             for row_index, row_data in enumerate(cursor.fetchall()):
                 self.tableWidget.insertRow(row_index)
@@ -479,9 +487,242 @@ class loadReport(QtWidgets.QMainWindow):
     def __init__(self, previous_page):
         super().__init__()
         uic.loadUi('./UIs/ReportPage.ui', self)
+        self.month = 1
+        self.MonthComboBox.currentTextChanged.connect(self.updateMonth)
         self.previous_page = previous_page
         self.pushButton_2.clicked.connect(self.goback)
+        self.reportTypeComboBox.currentTextChanged.connect(self.update_label)
+        self.pushButton.clicked.connect(self.generate_report)
+        self.year = datetime.datetime.now().year
+        
+    
+    def updateMonth(self):
+        
+        month = self.MonthComboBox.currentText()
+        month = month.lower()
+        match month:
+            case 'january':
+                self.month = 1
+            case 'february':
+                self.month = 2
+            case 'march':
+                self.month = 3
+            case 'april':
+                self.month = 4
+            case 'may':
+                self.month = 5
+            case 'june':
+                self.month = 6
+            case 'july':
+                self.month = 7
+            case 'august':
+                self.month = 8
+            case 'september':
+                self.month = 9
+            case 'october':
+                self.month = 10
+            case 'november':
+                self.month = 11
+            case 'december':
+                self.month = 12
 
+        
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()
+
+    def update_label(self):
+        type=self.reportTypeComboBox.currentText()
+        self.tableWidget_2.setRowCount(0)
+        self.tableWidget_3.setRowCount(0)
+        if type == 'Income Statement':
+            self.incomeLabel_2.setText('Income')
+            self.expenseLabel_2.setText('Expense')
+            self.netRevenueLabel_2.setText('Net Revenue')
+            self.incomeLineEdit_2.setText('')
+            self.expenseLineEdit_2.setText('')
+            self.netRevenueLineEdit_2.setText('')
+        elif type == 'Cash Flow':
+            self.incomeLabel_2.setText('Cash Inflow')
+            self.expenseLabel_2.setText('Cash Outflow')
+            self.netRevenueLabel_2.setText('Net Cash Flow')
+            self.incomeLineEdit_2.setText('')
+            self.expenseLineEdit_2.setText('')
+            self.netRevenueLineEdit_2.setText('')
+    
+    def generate_report(self):
+        self.incomeLineEdit_2.setText('')
+        self.expenseLineEdit_2.setText('')
+        self.netRevenueLineEdit_2.setText('')
+        type=self.reportTypeComboBox.currentText()
+        cursor = connection.cursor()
+        self.tableWidget_2.setRowCount(0)
+        self.tableWidget_3.setRowCount(0)
+        if type == 'Income Statement':
+            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=1) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Income')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            # check if the query returns any data
+            if(cursor.rowcount == 0):
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Report Generation Failed')
+                message_box.setText('No Data Found')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+                return
+            
+            for row_index, row_data in enumerate(cursor.fetchall()):
+                self.tableWidget_3.insertRow(row_index)
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(str(cell_data))
+            
+                    self.tableWidget_3.setItem(row_index, col_index, item)
+            
+            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=2) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Expense')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            for row_index, row_data in enumerate(cursor.fetchall()):
+                self.tableWidget_2.insertRow(row_index)
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(str(cell_data))
+                    self.tableWidget_2.setItem(row_index, col_index, item)
+
+            # set label texts according to the sum of the amounts in the table using query and get transactions from the month selected and this year
+            cursor.execute(f"SELECT SUM(Amount) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Income')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            income = cursor.fetchone()
+            cursor.execute(f"SELECT SUM(Amount) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Expense')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            expense = cursor.fetchone()
+            net_revenue = income[0] - expense[0]
+            self.incomeLineEdit_2.setText(str(income[0]))
+            self.expenseLineEdit_2.setText(str(expense[0]))
+            self.netRevenueLineEdit_2.setText(str(net_revenue))
+
+            
+
+            # insert query to add data to Report table which has columns [ReportID] ,[ReportType],[ReportMonth],[GeneratedAt],[User_ID],[Income/CashIn],[Expense/CashOut],[NetRevenue/NetCashFlow] based on the type of report
+            ## check if report already exists then update it else insert it
+            cursor.execute(f"SELECT * FROM [Reports] WHERE ReportType = '{type}' AND ReportMonth = '{self.MonthComboBox.currentText()} {self.year}' AND User_ID = {Logged_in_userID}")
+            if cursor.fetchone():
+                cursor.execute(f"UPDATE [Reports] SET [Income/CashIn] = {income[0]}, [Expense/CashOut] = {expense[0]}, [NetRevenue/NetCashFlow] = {net_revenue} WHERE ReportType = '{type}' AND ReportMonth = '{self.MonthComboBox.currentText()} {self.year}' AND User_ID = {Logged_in_userID}")
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Report Generated')
+                message_box.setText('Report Details Updated Successfully')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+            else:
+                cursor.execute(f"INSERT INTO [Reports] (ReportType,ReportMonth,GeneratedAt,User_ID,[Income/CashIn],[Expense/CashOut],[NetRevenue/NetCashFlow]) Values ('{type}','{self.MonthComboBox.currentText()} {self.year}',GETDATE(),{Logged_in_userID},{income[0]},{expense[0]},{net_revenue})")
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Report Generated')
+                message_box.setText('Report Generated Successfully')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+
+
+
+        elif type == 'Cash Flow':
+            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=2) FROM Transactions WHERE Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            if(cursor.rowcount == 0):
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Report Generation Failed')
+                message_box.setText('No Data Found')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+                return
+            
+            for row_index, row_data in enumerate(cursor.fetchall()):
+                self.tableWidget_3.insertRow(row_index)
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(str(cell_data))
+                    self.tableWidget_3.setItem(row_index, col_index, item)
+            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=2) FROM Transactions WHERE Credit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            for row_index, row_data in enumerate(cursor.fetchall()):
+                self.tableWidget_2.insertRow(row_index)
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(str(cell_data))
+                    self.tableWidget_2.setItem(row_index, col_index, item)
+        
+            # set label texts according to the sum of the amounts in the table using query
+            cursor.execute(f"SELECT SUM(Amount) FROM Transactions WHERE Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            cash_inflow = cursor.fetchone()
+            cursor.execute(f"SELECT SUM(Amount) FROM Transactions WHERE Credit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            cash_outflow = cursor.fetchone()
+            net_cash_flow = cash_inflow[0] - cash_outflow[0]
+            self.incomeLineEdit_2.setText(str(cash_inflow[0]))
+            self.expenseLineEdit_2.setText(str(cash_outflow[0]))
+            self.netRevenueLineEdit_2.setText(str(net_cash_flow))
+            
+
+            # insert query to add data to Report table which has columns [ReportID] ,[ReportType],[ReportMonth],[GeneratedAt],[User_ID],[Income/CashIn],[Expense/CashOut],[NetRevenue/NetCashFlow] based on the type of report
+            ## check if report already exists then update it else insert it
+
+            cursor.execute(f"SELECT * FROM [Reports] WHERE ReportType = '{type}' AND ReportMonth = '{self.MonthComboBox.currentText()} {self.year}' AND User_ID = {Logged_in_userID}")
+            if cursor.fetchone():
+                cursor.execute(f"UPDATE [Reports] SET [Income/CashIn] = {cash_inflow[0]}, [Expense/CashOut] = {cash_outflow[0]}, [NetRevenue/NetCashFlow] = {net_cash_flow} WHERE ReportType = '{type}' AND ReportMonth = '{self.MonthComboBox.currentText()} {self.year}' AND User_ID = {Logged_in_userID}")
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Report Generated')
+                message_box.setText('Report Details Updated Successfully')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+            else:
+                cursor.execute(f"INSERT INTO [Reports] (ReportType,ReportMonth,GeneratedAt,User_ID,[Income/CashIn],[Expense/CashOut],[NetRevenue/NetCashFlow]) Values ('{type}','{self.MonthComboBox.currentText()} {self.year}',GETDATE(),{Logged_in_userID},{cash_inflow[0]},{cash_outflow[0]},{net_cash_flow})")
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle('Report Generated')
+                message_box.setText('Report Generated Successfully')
+                message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+                message_box.exec()
+        connection.commit()
+
+        
+
+
+        
+
+    pass
+
+class UserReport(QtWidgets.QMainWindow):
+    def __init__(self, previous_page):
+        super().__init__()
+        uic.loadUi('./UIs/UserReports.ui', self)
+        self.previous_page = previous_page
+        self.pushButton.clicked.connect(self.generate_report)
+        self.pushButton_2.clicked.connect(self.show_report)
+        self.pushButton_3.clicked.connect(self.goback)
+
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()
+        
+    def generate_report(self):
+        previous_page = self
+        self.report_pg = loadReport(previous_page)
+        self.report_pg.show()
+        self.close()
+
+    def show_report(self):
+        previous_page = self
+        self.report_pg = UserViewReports(previous_page)
+        self.report_pg.show()
+        self.close()
+
+
+class UserViewReports(QtWidgets.QMainWindow):
+    def __init__(self, previous_page):
+        super().__init__()
+        uic.loadUi('./UIs/UserViewReports.ui', self)
+        self.previous_page = previous_page
+        self.pushButton.clicked.connect(self.goback)
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM [Reports] WHERE User_ID = {Logged_in_userID}")
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+    
     def goback(self):
         self.previous_page.show()
         self.close()
@@ -497,7 +738,7 @@ class loadAcc_History(QtWidgets.QMainWindow):
         self.acc_id=account_id
         cursor=connection.cursor()
         cursor.execute(f"select Transaction_ID,Generated_At,Amount,Description,Debit_Account_ID,Credit_Account_ID, (select Category_Name from Categories where Category_ID = Transactions.Category_ID  ) from Transactions where  Debit_Account_ID = {self.acc_id} or Credit_Account_ID = {self.acc_id}")
-        self.tableWidget.clear()
+        # self.tableWidget.clear()
         self.tableWidget.setRowCount(0)
         for row_index, row_data in enumerate(cursor.fetchall()):
             self.tableWidget.insertRow(row_index)
@@ -558,8 +799,9 @@ class AdminMain(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi('./UIs/AdminMain.ui', self)
         self.pushButton.clicked.connect(self.show_users)
-        self.pushButton_2.clicked.connect(self.show_reports)
+        self.pushButton_2.clicked.connect(self.show_transac)
         self.logoutButton.clicked.connect(self.logout)
+        self.pushButton_3.clicked.connect(self.show_report)
 
 
     
@@ -575,10 +817,16 @@ class AdminMain(QtWidgets.QMainWindow):
         self.user_view.show()
         self.close()
         
-    def show_reports(self):
+    def show_transac(self):
         previous_page=AdminMain()
         self.view_transac=AdminTransac(previous_page)
         self.view_transac.show()
+        self.close()
+
+    def show_report(self):
+        previous_page = AdminMain()
+        self.view_pg = AdminReport(previous_page)
+        self.view_pg.show()
         self.close()
 
 class AdminUserView(QtWidgets.QMainWindow):
@@ -587,7 +835,7 @@ class AdminUserView(QtWidgets.QMainWindow):
         uic.loadUi('./UIs/AdminUserView.ui',self)
         self.previous_page = previous_page
         self.pushButton.clicked.connect(self.goback)
-        self.tableWidget.clear()
+        # self.tableWidget.clear()
         self.tableWidget.setRowCount(0)
         cursor= connection.cursor()
         cursor.execute("select * from Users where User_Name != 'admin'")
@@ -619,7 +867,7 @@ class AdminUserView(QtWidgets.QMainWindow):
         else:
             cursor.execute(f"UPDATE [Users] SET Approved = 1 WHERE User_ID = {user[0]}")
         connection.commit()
-        self.tableWidget.clear()
+        # self.tableWidget.clear()
         self.tableWidget.setRowCount(0)
         cursor.execute("select * from Users where User_Name != 'admin'")
         for row_index, row_data in enumerate(cursor.fetchall()):
@@ -640,7 +888,7 @@ class AdminTransac(QtWidgets.QMainWindow):
         uic.loadUi('./UIs/AdminTransactions.ui',self)
         self.previous_page = previous_page
         self.pushButton.clicked.connect(self.goback)
-        self.tableWidget.clear()
+        # self.tableWidget.clear()
         self.tableWidget.setRowCount(0)
         cursor= connection.cursor()
         cursor.execute("select Transaction_ID,Generated_At,Amount,Description,Debit_Account_ID,Credit_Account_ID, (select Category_Name from Categories where Category_ID = Transactions.Category_ID  ) from Transactions")
@@ -653,7 +901,7 @@ class AdminTransac(QtWidgets.QMainWindow):
         userFilterComboBox = self.userFilterComboBox
         userFilterComboBox.clear()
         userFilterComboBox.addItem("All")
-        cursor.execute("select * from Users where Username != 'admin'")
+        cursor.execute("select * from Users where User_Name != 'admin'")
         for user in cursor.fetchall():
             userFilterComboBox.addItem(user[1], user)
 
@@ -668,7 +916,7 @@ class AdminTransac(QtWidgets.QMainWindow):
             cursor.execute(f"select Transaction_ID,Generated_At,Amount,Description,Debit_Account_ID,Credit_Account_ID, (select Category_Name from Categories where Category_ID = Transactions.Category_ID  ) from Transactions where  Debit_Account_ID in (select Account_ID from Accounts where User_ID = (select User_ID from Users where User_ID = {user[0]})) or Credit_Account_ID in (select Account_ID from Accounts where User_ID = (select User_ID from Users where User_ID = {user[0]}))")
         else:
             cursor.execute("select Transaction_ID,Generated_At,Amount,Description,Debit_Account_ID,Credit_Account_ID, (select Category_Name from Categories where Category_ID = Transactions.Category_ID  ) from Transactions")
-        self.tableWidget.clear()
+        # self.tableWidget.clear()
         self.tableWidget.setRowCount(0)
         for row_index, row_data in enumerate(cursor.fetchall()):
             self.tableWidget.insertRow(row_index)
@@ -680,7 +928,25 @@ class AdminTransac(QtWidgets.QMainWindow):
         self.previous_page.show()
         self.close()
 
-    
+class AdminReport(QtWidgets.QMainWindow):
+    def __init__(self,previous_page):
+        super().__init__()
+        self.previous_page = previous_page
+        uic.loadUi('./UIs/AdminViewReports.ui',self)
+        self.pushButton.clicked.connect(self.goback)
+        self.tableWidget.setRowCount(0)
+        cursor= connection.cursor()
+        cursor.execute("select * from Reports")
+        for row_index, row_data in enumerate(cursor.fetchall()):
+            self.tableWidget.insertRow(row_index)
+            for col_index, cell_data in enumerate(row_data):
+                item = QTableWidgetItem(str(cell_data))
+                self.tableWidget.setItem(row_index, col_index, item)
+
+    def goback(self):
+        self.previous_page.show()
+        self.close()    
+
 
 # Create an instance of QtWidgets . QApplication
 app = QtWidgets.QApplication(sys.argv)
