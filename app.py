@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
 import pypyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'DESKTOP-645TUK7'
+SERVER_NAME = 'LAPTOP-RL1G882R'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -562,14 +562,14 @@ class loadReport(QtWidgets.QMainWindow):
         if type == 'Income Statement':
             cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=1) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Income')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
             # check if the query returns any data
-            if(cursor.rowcount == 0):
-                message_box = QtWidgets.QMessageBox()
-                message_box.setWindowTitle('Report Generation Failed')
-                message_box.setText('No Data Found')
-                message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
-                message_box.exec()
-                return
+            # if(cursor.rowcount == 0):
+            #     message_box = QtWidgets.QMessageBox()
+            #     message_box.setWindowTitle('Report Generation Failed')
+            #     message_box.setText('Not Enough Data')
+            #     message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            #     message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            #     message_box.exec()
+            #     return
             
             for row_index, row_data in enumerate(cursor.fetchall()):
                 self.tableWidget_3.insertRow(row_index)
@@ -586,9 +586,9 @@ class loadReport(QtWidgets.QMainWindow):
                     self.tableWidget_2.setItem(row_index, col_index, item)
 
             # set label texts according to the sum of the amounts in the table using query and get transactions from the month selected and this year
-            cursor.execute(f"SELECT SUM(Amount) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Income')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            cursor.execute(f"SELECT coalesce(SUM(Amount),0) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Income')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
             income = cursor.fetchone()
-            cursor.execute(f"SELECT SUM(Amount) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Expense')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            cursor.execute(f"SELECT coalesce(SUM(Amount),0) FROM Transactions WHERE Category_ID in ( select Category_ID from Categories where Category_Name = 'Expense')and (Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} )or Credit_Account_ID in ( Select Account_ID from Accounts where User_ID= {Logged_in_userID})) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
             expense = cursor.fetchone()
             net_revenue = income[0] - expense[0]
             self.incomeLineEdit_2.setText(str(income[0]))
@@ -621,14 +621,14 @@ class loadReport(QtWidgets.QMainWindow):
 
         elif type == 'Cash Flow':
             cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=2) FROM Transactions WHERE Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
-            if(cursor.rowcount == 0):
-                message_box = QtWidgets.QMessageBox()
-                message_box.setWindowTitle('Report Generation Failed')
-                message_box.setText('No Data Found')
-                message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-                message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
-                message_box.exec()
-                return
+            # if(cursor.rowcount == 0):
+            #     message_box = QtWidgets.QMessageBox()
+            #     message_box.setWindowTitle('Report Generation Failed')
+            #     message_box.setText('Not Enough Data')
+            #     message_box.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+            #     message_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+            #     message_box.exec()
+            #     return
             
             for row_index, row_data in enumerate(cursor.fetchall()):
                 self.tableWidget_3.insertRow(row_index)
@@ -643,9 +643,9 @@ class loadReport(QtWidgets.QMainWindow):
                     self.tableWidget_2.setItem(row_index, col_index, item)
         
             # set label texts according to the sum of the amounts in the table using query
-            cursor.execute(f"SELECT SUM(Amount) FROM Transactions WHERE Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            cursor.execute(f"SELECT coalesce(SUM(Amount),0) FROM Transactions WHERE Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
             cash_inflow = cursor.fetchone()
-            cursor.execute(f"SELECT SUM(Amount) FROM Transactions WHERE Credit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            cursor.execute(f"SELECT coalesce(SUM(Amount),0) FROM Transactions WHERE Credit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
             cash_outflow = cursor.fetchone()
             net_cash_flow = cash_inflow[0] - cash_outflow[0]
             self.incomeLineEdit_2.setText(str(cash_inflow[0]))
