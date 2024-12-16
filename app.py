@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
-import pypyodbc as odbc
+import pyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'LAPTOP-RL1G882R'
+SERVER_NAME = 'DESKTOP-6JOJPQM'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""
@@ -620,7 +620,7 @@ class loadReport(QtWidgets.QMainWindow):
 
 
         elif type == 'Cash Flow':
-            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=2) FROM Transactions WHERE Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID in (Select Category_ID from Transactions t where t.Transaction_ID = Transactions.Transaction_ID)) FROM Transactions WHERE Debit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
             # if(cursor.rowcount == 0):
             #     message_box = QtWidgets.QMessageBox()
             #     message_box.setWindowTitle('Report Generation Failed')
@@ -635,7 +635,7 @@ class loadReport(QtWidgets.QMainWindow):
                 for col_index, cell_data in enumerate(row_data):
                     item = QTableWidgetItem(str(cell_data))
                     self.tableWidget_3.setItem(row_index, col_index, item)
-            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID=2) FROM Transactions WHERE Credit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
+            cursor.execute(f"SELECT Description, Generated_At, Amount, Debit_Account_ID, Credit_Account_ID,Generated_At,(Select Category_Name from Categories where Category_ID in (Select Category_ID from Transactions t where t.Transaction_ID = Transactions.Transaction_ID)) FROM Transactions WHERE Credit_Account_ID in ( Select Account_ID from Accounts where User_ID = {Logged_in_userID} and (Account_Name like '%Cash%' or Account_Name like '%cash%' )  ) and MONTH(Generated_At) = {self.month} and YEAR(Generated_At) = {self.year}")
             for row_index, row_data in enumerate(cursor.fetchall()):
                 self.tableWidget_2.insertRow(row_index)
                 for col_index, cell_data in enumerate(row_data):
