@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6 import uic
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem
-import pyodbc as odbc
+import pypyodbc as odbc
 
 DRIVER_NAME = 'SQL SERVER'
-SERVER_NAME = 'DESKTOP-6JOJPQM'
+SERVER_NAME = 'DESKTOP-645TUK7'
 DATABASE_NAME = 'AccountingHuDb'
 
 connection_string = f"""

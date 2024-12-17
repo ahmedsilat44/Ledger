@@ -165,12 +165,22 @@
     </attribute>
     <column>
      <property name="text">
-      <string>Desc</string>
+      <string>Transaction</string>
+     </property>
+    </column>
+    <column>
+    <property name="text">
+      <string>Date</string>
      </property>
     </column>
     <column>
      <property name="text">
       <string>Amount</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Description</string>
      </property>
     </column>
     <column>
@@ -181,11 +191,6 @@
     <column>
      <property name="text">
       <string>Credit Acc</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Date</string>
      </property>
     </column>
     <column>
